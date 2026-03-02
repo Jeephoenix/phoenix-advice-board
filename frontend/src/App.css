@@ -727,3 +727,105 @@ body {
   line-height: 1.6; background: var(--bg3);
   padding: 12px; border-radius: 8px;
                               }
+
+/* ── Question Card Extras ──────────────────── */
+.card-header-left {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.question-id {
+  font-size: 11px; color: var(--muted);
+  font-weight: 600;
+}
+
+.your-question {
+  background: #1e1a00; color: var(--gold);
+  padding: 2px 8px; border-radius: 10px;
+  font-size: 11px; font-weight: 600;
+}
+
+.read-more {
+  background: none; border: none;
+  color: var(--primary); cursor: pointer;
+  font-size: 12px; padding: 4px 0;
+  margin-bottom: 8px; display: block;
+  transition: opacity 0.2s;
+}
+
+.read-more:hover { opacity: 0.75; }
+
+.tip-pool {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; background: var(--bg3);
+  padding: 12px 14px; border-radius: 8px;
+  margin-bottom: 14px; border: 1px solid var(--border);
+}
+
+.tip-pool-left, .tip-pool-right {
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.tip-pool-right { text-align: right; }
+.tip-label { font-size: 11px; color: var(--muted); }
+.tip-amount { font-size: 15px; font-weight: 700; color: var(--gold); }
+.tip-earn   { font-size: 15px; font-weight: 700; color: var(--success); }
+
+.best-answer-highlight {
+  background: #1c1500; border: 1px solid var(--gold);
+  border-radius: 8px; padding: 14px;
+  margin-bottom: 14px;
+}
+
+.best-answer-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--gold); margin-bottom: 8px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.best-answer-text {
+  font-size: 14px; color: var(--text);
+  line-height: 1.5; margin-bottom: 8px;
+}
+
+.best-answer-meta {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--muted);
+}
+
+.best-earned { color: var(--gold); font-weight: 600; }
+
+.toggle-answers {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer;
+  font-size: 13px; padding: 8px 14px;
+  border-radius: 8px; width: 100%;
+  margin-bottom: 12px; transition: all 0.2s;
+}
+
+.toggle-answers:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.waiting-notice {
+  text-align: center; padding: 12px;
+  background: var(--bg3); border-radius: 8px;
+  font-size: 13px; color: var(--muted);
+  border: 1px dashed var(--border);
+  margin-bottom: 4px;
+}
+
+.pick-prompt {
+  background: #1a1500; border: 1px solid var(--gold);
+  border-radius: 8px; padding: 12px 14px;
+  font-size: 13px; color: var(--gold);
+  margin-bottom: 12px; line-height: 1.5;
+  text-align: center;
+}
+
+.closed-footer {
+  text-align: center; font-size: 12px;
+  color: var(--muted); padding: 10px;
+  background: var(--bg3); border-radius: 8px;
+  border: 1px solid var(--border);
+  }
