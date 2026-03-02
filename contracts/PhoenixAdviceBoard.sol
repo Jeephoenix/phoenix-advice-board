@@ -8,7 +8,7 @@ pragma solidity ^0.8.19;
 contract PhoenixAdviceBoard {
 
     // ── Constants ─────────────────────────────────────
-    uint256 public constant ASK_FEE         = 0.001 ether;
+    uint256 public constant ASK_FEE         = 0.0001 ether;  // Updated fee
     uint256 public constant OWNER_SHARE     = 20;   // 20%
     uint256 public constant ANSWERER_SHARE  = 80;   // 80%
 
@@ -107,7 +107,7 @@ contract PhoenixAdviceBoard {
         string memory _content,
         string memory _category
     ) external payable {
-        require(msg.value >= ASK_FEE, "Minimum fee is 0.001 ETH");
+        require(msg.value >= ASK_FEE, "Minimum fee is 0.0001 ETH");
         require(bytes(_content).length > 0, "Question cannot be empty");
         require(bytes(_category).length > 0, "Category cannot be empty");
 
