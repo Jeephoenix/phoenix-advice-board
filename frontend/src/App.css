@@ -532,3 +532,52 @@ body {
   .stats-bar { grid-template-columns: 1fr 1fr; gap: 8px; }
   .stat-value { font-size: 0.85rem; }
            }
+
+/* ── Post Question Extras ──────────────────── */
+.fee-title {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.fee-row.success { color: var(--success); font-weight: 600; }
+.fee-divider {
+  height: 1px; background: var(--border); margin: 8px 0;
+}
+.fee-row.small { font-size: 11px; }
+
+.how-it-works {
+  background: var(--bg3); border-radius: 10px;
+  padding: 16px; margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.how-title {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.how-steps {
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.how-step {
+  display: flex; align-items: flex-start; gap: 12px;
+}
+
+.how-num {
+  min-width: 22px; height: 22px; background: var(--primary);
+  color: white; border-radius: 50%; font-size: 11px;
+  font-weight: 700; display: flex; align-items: center;
+  justify-content: center;
+}
+
+.how-step p {
+  font-size: 13px; color: var(--muted); line-height: 1.5;
+}
+
+.post-disclaimer {
+  text-align: center; font-size: 11px;
+  color: var(--muted); margin-top: 12px; line-height: 1.5;
+}
