@@ -581,3 +581,149 @@ body {
   text-align: center; font-size: 11px;
   color: var(--muted); margin-top: 12px; line-height: 1.5;
 }
+/* ── Answer Question Extras ────────────────── */
+.question-preview-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 10px;
+}
+
+.earning-highlight {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; margin-top: 14px;
+  background: var(--bg); border-radius: 8px;
+  padding: 12px 14px; border: 1px solid var(--border);
+}
+
+.earning-left, .earning-right {
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.earning-right { text-align: right; }
+
+.earning-label {
+  font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.earning-amount {
+  font-size: 15px; font-weight: 700; color: var(--gold);
+}
+
+.earning-you {
+  font-size: 15px; font-weight: 700; color: var(--success);
+}
+
+.answer-form-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 8px;
+}
+
+.answer-form-header h4 { font-size: 15px; }
+
+.earning-badge {
+  background: #064e3b; color: #6ee7b7;
+  padding: 4px 10px; border-radius: 10px;
+  font-size: 11px; font-weight: 700;
+}
+
+.answer-hint {
+  font-size: 13px; color: var(--muted);
+  margin-bottom: 14px; line-height: 1.6;
+}
+
+.answer-tips {
+  background: var(--bg3); border-radius: 8px;
+  padding: 14px 16px; margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+
+.answer-tips-title {
+  font-size: 12px; font-weight: 700;
+  color: var(--muted); margin-bottom: 8px;
+}
+
+.answer-tips ul {
+  list-style: none; padding: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+.answer-tips ul li {
+  font-size: 13px; color: var(--muted);
+  padding-left: 16px; position: relative;
+  line-height: 1.4;
+}
+
+.answer-tips ul li::before {
+  content: "→"; position: absolute;
+  left: 0; color: var(--primary);
+}
+
+.textarea-footer {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-top: 4px;
+}
+
+.char-count.warn { color: var(--danger); }
+.min-warn { color: var(--danger); font-size: 11px; }
+.ready-check { font-size: 11px; color: var(--success); }
+
+.payout-breakdown {
+  background: var(--bg3); border-radius: 8px;
+  padding: 14px 16px; margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+
+.answer-meta-row {
+  display: flex; gap: 12px; font-size: 11px;
+  color: var(--muted); margin-top: 8px;
+}
+
+.submit-success {
+  display: flex; gap: 14px; align-items: flex-start;
+  background: #064e3b; border: 1px solid #10b981;
+  border-radius: 10px; padding: 16px;
+  margin-top: 16px; font-size: 1.8rem;
+}
+
+.success-title {
+  font-size: 14px; font-weight: 700;
+  color: var(--success); margin-bottom: 4px;
+}
+
+.success-sub {
+  font-size: 13px; color: #6ee7b7; line-height: 1.5;
+}
+
+.closed-section {
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.winner-card {
+  background: #1c1500; border: 1px solid var(--gold);
+  border-radius: 10px; padding: 16px;
+}
+
+.winner-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--gold); margin-bottom: 12px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.winner-info {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+.winner-address {
+  display: flex; justify-content: space-between;
+  align-items: center; font-size: 13px;
+}
+
+.winner-earned {
+  color: var(--gold); font-weight: 700; font-size: 13px;
+}
+
+.winner-answer {
+  font-size: 14px; color: var(--text);
+  line-height: 1.6; background: var(--bg3);
+  padding: 12px; border-radius: 8px;
+                              }
