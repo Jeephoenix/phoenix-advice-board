@@ -417,7 +417,7 @@ MIT License — free to use, share, and build upon.
 
 ## 👤 Author
 
-Built with 🔥 on Base blockchain.
+Built with 💙 by Jee Phoenix on Base blockchain.
 **Ask boldly. Answer well. Earn on-chain.**
 
 ---
