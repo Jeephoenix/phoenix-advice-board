@@ -176,7 +176,7 @@ phoenix-advice-board/
 
 **1. Clone the repo:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/phoenix-advice-board.git
+git clone https://github.com/Jeephoenix/phoenix-advice-board.git
 cd phoenix-advice-board
 ```
 
