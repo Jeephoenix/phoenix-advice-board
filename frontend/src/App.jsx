@@ -1,4 +1,4 @@
-import { useState, useEffect }  from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ethers }               from "ethers";
 import ConnectWallet            from "./components/ConnectWallet";
 import PostQuestion             from "./components/PostQuestion";
@@ -19,25 +19,48 @@ export default function App() {
   const [stats,       setStats]       = useState(null);
   const [view,        setView]        = useState("board");
 
+  // ── Disconnect Wallet ─────────────────────────────
+  // Wrapped in useCallback so it has a stable reference
+  // for the useEffect dependency array, preventing stale closures.
+  const disconnectWallet = useCallback(() => {
+    setProvider(null);
+    setSigner(null);
+    setContract(null);
+    setAccount(null);
+    setQuestions([]);
+    setStats(null);
+    setView("board");
+  }, []);
+
   // ── Connect Wallet ────────────────────────────────
   const connectWallet = async (walletName = "MetaMask") => {
     try {
-      let _provider;
-
       if (!window.ethereum && !window.okxwallet) {
         setError("No wallet found. Please install a wallet first.");
         return;
       }
 
       setLoading(true);
+      setError(""); // Clear stale errors before each new action
 
-      // Select correct provider based on chosen wallet
+      let _provider;
+
       if (walletName === "OKX Wallet" && window.okxwallet) {
         _provider = new ethers.BrowserProvider(window.okxwallet);
       } else if (window.ethereum) {
         _provider = new ethers.BrowserProvider(window.ethereum);
       } else {
         setError("Selected wallet not found. Please install it first.");
+        setLoading(false); // Ensure loading resets on early return
+        return;
+      }
+
+      // Validate the user is on the correct chain (Base = 8453, Base Sepolia = 84532)
+      const network = await _provider.getNetwork();
+      const allowedChains = [8453n, 84532n];
+      if (!allowedChains.includes(network.chainId)) {
+        setError("Please switch to Base or Base Sepolia network.");
+        setLoading(false);
         return;
       }
 
@@ -53,7 +76,6 @@ export default function App() {
       setSigner(_signer);
       setContract(_contract);
       setAccount(accounts[0]);
-      setError("");
 
       await loadData(_contract);
     } catch (err) {
@@ -104,7 +126,13 @@ export default function App() {
         });
       }
 
-      setQuestions(loaded.reverse());
+      const reversed = loaded.reverse();
+      setQuestions(reversed);
+
+      // Sync `selected` with freshly loaded data so it's never stale
+      setSelected(prev =>
+        prev ? reversed.find(q => q.id === prev.id) ?? null : null
+      );
 
       const s = await _contract.getStats();
       setStats({
@@ -124,6 +152,7 @@ export default function App() {
   const postQuestion = async (content, category, fee) => {
     try {
       setLoading(true);
+      setError("");
       const tx = await contract.postQuestion(content, category, {
         value: ethers.parseEther(fee)
       });
@@ -141,10 +170,10 @@ export default function App() {
   const postAnswer = async (questionId, content) => {
     try {
       setLoading(true);
+      setError("");
       const tx = await contract.postAnswer(questionId, content);
       await tx.wait();
-      await loadData(contract);
-      setSelected(null);
+      await loadData(contract); // selected is synced inside loadData
       setView("board");
     } catch (err) {
       setError("Failed to post answer: " + err.message);
@@ -157,6 +186,7 @@ export default function App() {
   const pickBestAnswer = async (questionId, answerId) => {
     try {
       setLoading(true);
+      setError("");
       const tx = await contract.pickBestAnswer(questionId, answerId);
       await tx.wait();
       await loadData(contract);
@@ -167,43 +197,38 @@ export default function App() {
     }
   };
 
-  // ── Disconnect Wallet ─────────────────────────────
-  const disconnectWallet = () => {
-    setProvider(null);
-    setSigner(null);
-    setContract(null);
-    setAccount(null);
-    setQuestions([]);
-    setStats(null);
-    setView("board");
-  };
-
-  // ── Listen for Account Changes ────────────────────
+  // ── Listen for Account / Chain Changes ───────────────────────────
+  // disconnectWallet is now stable (useCallback), safe in dependency array.
+  // Cleanup function removes listeners on unmount to prevent memory leaks.
   useEffect(() => {
+    const handleEthAccountsChanged = (accs) => {
+      if (accs.length === 0) disconnectWallet();
+      else setAccount(accs[0]);
+    };
+    const handleChainChanged = () => window.location.reload();
+    const handleOkxAccountsChanged = (accs) => {
+      if (accs.length === 0) disconnectWallet();
+      else setAccount(accs[0]);
+    };
+
     if (window.ethereum) {
-      window.ethereum.on("accountsChanged", (accs) => {
-        if (accs.length === 0) {
-          disconnectWallet();
-        } else {
-          setAccount(accs[0]);
-        }
-      });
-
-      window.ethereum.on("chainChanged", () => {
-        window.location.reload();
-      });
+      window.ethereum.on("accountsChanged", handleEthAccountsChanged);
+      window.ethereum.on("chainChanged",    handleChainChanged);
     }
-
     if (window.okxwallet) {
-      window.okxwallet.on("accountsChanged", (accs) => {
-        if (accs.length === 0) {
-          disconnectWallet();
-        } else {
-          setAccount(accs[0]);
-        }
-      });
+      window.okxwallet.on("accountsChanged", handleOkxAccountsChanged);
     }
-  }, []);
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener("accountsChanged", handleEthAccountsChanged);
+        window.ethereum.removeListener("chainChanged",    handleChainChanged);
+      }
+      if (window.okxwallet) {
+        window.okxwallet.removeListener("accountsChanged", handleOkxAccountsChanged);
+      }
+    };
+  }, [disconnectWallet]);
 
   return (
     <div className="app">
@@ -369,4 +394,4 @@ export default function App() {
       )}
     </div>
   );
-        }
+}
