@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ethers }               from "ethers";
 import ConnectWallet            from "./components/ConnectWallet";
 import PostQuestion             from "./components/PostQuestion";
@@ -8,89 +8,32 @@ import deploymentInfo           from "./utils/deploymentInfo.json";
 import "./App.css";
 
 export default function App() {
-  const [provider,    setProvider]    = useState(null);
-  const [signer,      setSigner]      = useState(null);
-  const [contract,    setContract]    = useState(null);
-  const [account,     setAccount]     = useState(null);
-  const [questions,   setQuestions]   = useState([]);
-  const [selected,    setSelected]    = useState(null);
-  const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState("");
-  const [stats,       setStats]       = useState(null);
-  const [view,        setView]        = useState("board");
+  const [account,   setAccount]   = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [selected,  setSelected]  = useState(null);
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState("");
+  const [stats,     setStats]     = useState(null);
+  const [view,      setView]      = useState("board");
+
+  const contractRef = useRef(null);
 
   // ── Disconnect Wallet ─────────────────────────────
-  // Wrapped in useCallback so it has a stable reference
-  // for the useEffect dependency array, preventing stale closures.
   const disconnectWallet = useCallback(() => {
-    setProvider(null);
-    setSigner(null);
-    setContract(null);
+    contractRef.current = null;
     setAccount(null);
+    setSelected(null);
     setQuestions([]);
     setStats(null);
     setView("board");
   }, []);
 
-  // ── Connect Wallet ────────────────────────────────
-  const connectWallet = async (walletName = "MetaMask") => {
-    try {
-      if (!window.ethereum && !window.okxwallet) {
-        setError("No wallet found. Please install a wallet first.");
-        return;
-      }
-
-      setLoading(true);
-      setError(""); // Clear stale errors before each new action
-
-      let _provider;
-
-      if (walletName === "OKX Wallet" && window.okxwallet) {
-        _provider = new ethers.BrowserProvider(window.okxwallet);
-      } else if (window.ethereum) {
-        _provider = new ethers.BrowserProvider(window.ethereum);
-      } else {
-        setError("Selected wallet not found. Please install it first.");
-        setLoading(false); // Ensure loading resets on early return
-        return;
-      }
-
-      // Validate the user is on the correct chain (Base = 8453, Base Sepolia = 84532)
-      const network = await _provider.getNetwork();
-      const allowedChains = [8453n, 84532n];
-      if (!allowedChains.includes(network.chainId)) {
-        setError("Please switch to Base or Base Sepolia network.");
-        setLoading(false);
-        return;
-      }
-
-      const accounts  = await _provider.send("eth_requestAccounts", []);
-      const _signer   = await _provider.getSigner();
-      const _contract = new ethers.Contract(
-        deploymentInfo.contractAddress,
-        deploymentInfo.abi,
-        _signer
-      );
-
-      setProvider(_provider);
-      setSigner(_signer);
-      setContract(_contract);
-      setAccount(accounts[0]);
-
-      await loadData(_contract);
-    } catch (err) {
-      setError("Wallet connection failed: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // ── Load All Data ─────────────────────────────────
-  const loadData = async (_contract) => {
+  const loadData = useCallback(async (_contract) => {
     try {
       setLoading(true);
-      const count   = await _contract.getQuestionCount();
-      const loaded  = [];
+      const count  = await _contract.getQuestionCount();
+      const loaded = [];
 
       for (let i = 1; i <= Number(count); i++) {
         const q       = await _contract.getQuestion(i);
@@ -104,32 +47,26 @@ export default function App() {
             content   : a.content,
             tipAmount : ethers.formatEther(a.tipAmount),
             isBest    : a.isBest,
-            createdAt : new Date(
-              Number(a.createdAt) * 1000
-            ).toLocaleString()
+            createdAt : new Date(Number(a.createdAt) * 1000).toLocaleString()
           });
         }
 
         loaded.push({
-          id                : Number(q.id),
-          asker             : q.asker,
-          content           : q.content,
-          category          : q.category,
-          tipPool           : ethers.formatEther(q.tipPool),
-          isOpen            : q.isOpen,
-          bestAnswerPicked  : q.bestAnswerPicked,
-          answerCount       : Number(q.answerCount),
-          createdAt         : new Date(
-            Number(q.createdAt) * 1000
-          ).toLocaleString(),
+          id               : Number(q.id),
+          asker            : q.asker,
+          content          : q.content,
+          category         : q.category,
+          tipPool          : ethers.formatEther(q.tipPool),
+          isOpen           : q.isOpen,
+          bestAnswerPicked : q.bestAnswerPicked,
+          answerCount      : Number(q.answerCount),
+          createdAt        : new Date(Number(q.createdAt) * 1000).toLocaleString(),
           answers
         });
       }
 
       const reversed = loaded.reverse();
       setQuestions(reversed);
-
-      // Sync `selected` with freshly loaded data so it's never stale
       setSelected(prev =>
         prev ? reversed.find(q => q.id === prev.id) ?? null : null
       );
@@ -146,69 +83,169 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // ── Build Contract for a Given Provider ──────────
+  const buildContract = useCallback(async (_provider) => {
+    const _signer   = await _provider.getSigner();
+    const _contract = new ethers.Contract(
+      deploymentInfo.contractAddress,
+      deploymentInfo.abi,
+      _signer
+    );
+    contractRef.current = _contract;
+    return _contract;
+  }, []);
+
+  // ── Chain Validator Helper ────────────────────────
+  const validateChain = useCallback(async (_provider) => {
+    const network       = await _provider.getNetwork();
+    const allowedChains = [8453n, 84532n];
+    return allowedChains.includes(network.chainId);
+  }, []);
+
+  // ── Connect Wallet ────────────────────────────────
+  const connectWallet = useCallback(async (walletName = "MetaMask") => {
+    try {
+      if (!window.ethereum && !window.okxwallet) {
+        setError("No wallet found. Please install a wallet first.");
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
+      let _provider;
+
+      if (walletName === "OKX Wallet" && window.okxwallet) {
+        _provider = new ethers.BrowserProvider(window.okxwallet);
+      } else if (window.ethereum) {
+        _provider = new ethers.BrowserProvider(window.ethereum);
+      } else {
+        setError("Selected wallet not found. Please install it first.");
+        return;
+      }
+
+      if (!(await validateChain(_provider))) {
+        setError("Please switch to Base or Base Sepolia network.");
+        return;
+      }
+
+      const accounts  = await _provider.send("eth_requestAccounts", []);
+      const _contract = await buildContract(_provider);
+
+      setAccount(accounts[0]);
+      await loadData(_contract);
+    } catch (err) {
+      setError("Wallet connection failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadData, buildContract, validateChain]);
 
   // ── Post Question ─────────────────────────────────
-  const postQuestion = async (content, category, fee) => {
+  const postQuestion = useCallback(async (content, category, fee) => {
+    if (!contractRef.current) {
+      setError("Wallet not connected.");
+      return;
+    }
     try {
       setLoading(true);
       setError("");
-      const tx = await contract.postQuestion(content, category, {
+      const tx = await contractRef.current.postQuestion(content, category, {
         value: ethers.parseEther(fee)
       });
       await tx.wait();
-      await loadData(contract);
+      await loadData(contractRef.current);
       setView("board");
     } catch (err) {
       setError("Failed to post question: " + err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadData]);
 
   // ── Post Answer ───────────────────────────────────
-  const postAnswer = async (questionId, content) => {
+  const postAnswer = useCallback(async (questionId, content) => {
+    if (!contractRef.current) {
+      setError("Wallet not connected.");
+      return;
+    }
     try {
       setLoading(true);
       setError("");
-      const tx = await contract.postAnswer(questionId, content);
+      const tx = await contractRef.current.postAnswer(questionId, content);
       await tx.wait();
-      await loadData(contract); // selected is synced inside loadData
+      await loadData(contractRef.current);
       setView("board");
     } catch (err) {
       setError("Failed to post answer: " + err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadData]);
 
   // ── Pick Best Answer ──────────────────────────────
-  const pickBestAnswer = async (questionId, answerId) => {
+  const pickBestAnswer = useCallback(async (questionId, answerId) => {
+    if (!contractRef.current) {
+      setError("Wallet not connected.");
+      return;
+    }
     try {
       setLoading(true);
       setError("");
-      const tx = await contract.pickBestAnswer(questionId, answerId);
+      const tx = await contractRef.current.pickBestAnswer(questionId, answerId);
       await tx.wait();
-      await loadData(contract);
+      await loadData(contractRef.current);
     } catch (err) {
       setError("Failed to pick best answer: " + err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadData]);
 
   // ── Listen for Account / Chain Changes ───────────────────────────
-  // disconnectWallet is now stable (useCallback), safe in dependency array.
-  // Cleanup function removes listeners on unmount to prevent memory leaks.
   useEffect(() => {
-    const handleEthAccountsChanged = (accs) => {
-      if (accs.length === 0) disconnectWallet();
-      else setAccount(accs[0]);
+    const handleEthAccountsChanged = async (accs) => {
+      if (accs.length === 0) {
+        disconnectWallet();
+      } else {
+        try {
+          const _provider = new ethers.BrowserProvider(window.ethereum);
+          if (!(await validateChain(_provider))) {
+            setError("Please switch to Base or Base Sepolia network.");
+            disconnectWallet();
+            return;
+          }
+          setAccount(accs[0]);
+          const _contract = await buildContract(_provider);
+          await loadData(_contract);
+        } catch (err) {
+          setError("Failed to switch account: " + err.message);
+        }
+      }
     };
+
     const handleChainChanged = () => window.location.reload();
-    const handleOkxAccountsChanged = (accs) => {
-      if (accs.length === 0) disconnectWallet();
-      else setAccount(accs[0]);
+
+    const handleOkxAccountsChanged = async (accs) => {
+      if (accs.length === 0) {
+        disconnectWallet();
+      } else {
+        try {
+          const _provider = new ethers.BrowserProvider(window.okxwallet);
+          if (!(await validateChain(_provider))) {
+            setError("Please switch to Base or Base Sepolia network.");
+            disconnectWallet();
+            return;
+          }
+          setAccount(accs[0]);
+          const _contract = await buildContract(_provider);
+          await loadData(_contract);
+        } catch (err) {
+          setError("Failed to switch account: " + err.message);
+        }
+      }
     };
 
     if (window.ethereum) {
@@ -228,7 +265,7 @@ export default function App() {
         window.okxwallet.removeListener("accountsChanged", handleOkxAccountsChanged);
       }
     };
-  }, [disconnectWallet]);
+  }, [disconnectWallet, loadData, buildContract, validateChain]);
 
   return (
     <div className="app">
